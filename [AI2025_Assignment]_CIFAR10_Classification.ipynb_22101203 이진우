@@ -1,0 +1,384 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/enderpawar/22101203_--Assignment-2---Classification/blob/main/%5BAI2025_Assignment%5D_CIFAR10_Classification.ipynb_22101203%20%EC%9D%B4%EC%A7%84%EC%9A%B0\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "A4wZyk6PTCgK"
+      },
+      "source": [
+        "# CIFAR10 Classification"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "eJ_41-SSu5_8"
+      },
+      "source": [
+        "## Import Packages"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "mMmpe3nHuzlE"
+      },
+      "outputs": [],
+      "source": [
+        "import sys\n",
+        "import pandas as pd\n",
+        "import tensorflow as tf\n",
+        "import matplotlib.pyplot as plt"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "S_beAzBMXWOW"
+      },
+      "source": [
+        "### Data Preparation\n",
+        "Use CIFAR10 handwriting dataset"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 2,
+      "metadata": {
+        "id": "v-EHyWvzXWOX"
+      },
+      "outputs": [],
+      "source": [
+        "cifar10 = tf.keras.datasets.cifar10"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Y_7rOwoDXWOX"
+      },
+      "source": [
+        "Prepare data for training"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 3,
+      "metadata": {
+        "id": "7iDlKPvfXWOX",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "12c3b07e-7da5-40ca-fc4d-7278c6ad2910"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Downloading data from https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz\n",
+            "\u001b[1m170498071/170498071\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m13s\u001b[0m 0us/step\n"
+          ]
+        }
+      ],
+      "source": [
+        "# train / test split\n",
+        "(x_train, y_train), (x_test, y_test) = cifar10.load_data()\n",
+        "\n",
+        "# minmax normalization\n",
+        "x_train, x_test = x_train / 255.0, x_test / 255.0\n",
+        "\n",
+        "# one-hot encoding\n",
+        "y_train = tf.keras.utils.to_categorical(y_train)\n",
+        "y_test = tf.keras.utils.to_categorical(y_test)\n",
+        "\n",
+        "# Data Augmentation for better generalization\n",
+        "data_augmentation = tf.keras.Sequential([\n",
+        "    tf.keras.layers.RandomFlip(\"horizontal\"),\n",
+        "    tf.keras.layers.RandomRotation(0.1),\n",
+        "    tf.keras.layers.RandomZoom(0.1),\n",
+        "])"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "5RNqanoWXWOY"
+      },
+      "source": [
+        "# Compile and Train neural network"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "NQuBo9QmXWOY"
+      },
+      "source": [
+        "## CNN Modeling\n",
+        "Create a convolutional neural network"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "-5Q5P2KVJZhJ"
+      },
+      "source": [
+        "### Goal\n",
+        "\n",
+        "Improve the provided basic CNN model and achieve CIFAR-10 **test accuracy ≥ 75%**.\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "24LRh6qOg6Bo"
+      },
+      "source": [
+        "Modify the network architecture!"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 4,
+      "metadata": {
+        "id": "3V_IqXaX-gYS",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "081f665b-2e6f-4de1-beb7-afeda75929d9"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.12/dist-packages/keras/src/layers/convolutional/base_conv.py:113: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.\n",
+            "  super().__init__(activity_regularizer=activity_regularizer, **kwargs)\n"
+          ]
+        }
+      ],
+      "source": [
+        "model = tf.keras.models.Sequential([\n",
+        "    # Data Augmentation\n",
+        "    data_augmentation,\n",
+        "\n",
+        "    # Block 1\n",
+        "    tf.keras.layers.Conv2D(64, (3, 3), padding='same', activation=\"relu\", input_shape=(32, 32, 3)),\n",
+        "    tf.keras.layers.BatchNormalization(),\n",
+        "    tf.keras.layers.Conv2D(64, (3, 3), padding='same', activation=\"relu\"),\n",
+        "    tf.keras.layers.BatchNormalization(),\n",
+        "    tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),\n",
+        "    tf.keras.layers.Dropout(0.2),\n",
+        "\n",
+        "    # Block 2\n",
+        "    tf.keras.layers.Conv2D(128, (3, 3), padding='same', activation=\"relu\"),\n",
+        "    tf.keras.layers.BatchNormalization(),\n",
+        "    tf.keras.layers.Conv2D(128, (3, 3), padding='same', activation=\"relu\"),\n",
+        "    tf.keras.layers.BatchNormalization(),\n",
+        "    tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),\n",
+        "    tf.keras.layers.Dropout(0.3),\n",
+        "\n",
+        "    # Block 3\n",
+        "    tf.keras.layers.Conv2D(256, (3, 3), padding='same', activation=\"relu\"),\n",
+        "    tf.keras.layers.BatchNormalization(),\n",
+        "    tf.keras.layers.Conv2D(256, (3, 3), padding='same', activation=\"relu\"),\n",
+        "    tf.keras.layers.BatchNormalization(),\n",
+        "    tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),\n",
+        "    tf.keras.layers.Dropout(0.4),\n",
+        "\n",
+        "    # Flatten units\n",
+        "    tf.keras.layers.Flatten(),\n",
+        "\n",
+        "    # Dense layers\n",
+        "    tf.keras.layers.Dense(512, activation=\"relu\"),\n",
+        "    tf.keras.layers.BatchNormalization(),\n",
+        "    tf.keras.layers.Dropout(0.5),\n",
+        "\n",
+        "    tf.keras.layers.Dense(256, activation=\"relu\"),\n",
+        "    tf.keras.layers.BatchNormalization(),\n",
+        "    tf.keras.layers.Dropout(0.5),\n",
+        "\n",
+        "    # Output layer\n",
+        "    tf.keras.layers.Dense(10, activation=\"softmax\")\n",
+        "])\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Compile and Train neural network"
+      ],
+      "metadata": {
+        "id": "hBdmMsv7_-v3"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Learning rate scheduler\n",
+        "lr_schedule = tf.keras.callbacks.ReduceLROnPlateau(\n",
+        "    monitor='val_loss',\n",
+        "    factor=0.5,\n",
+        "    patience=3,\n",
+        "    min_lr=1e-7,\n",
+        "    verbose=1\n",
+        ")\n",
+        "\n",
+        "# Early stopping to prevent overfitting\n",
+        "early_stopping = tf.keras.callbacks.EarlyStopping(\n",
+        "    monitor='val_accuracy',\n",
+        "    patience=10,\n",
+        "    restore_best_weights=True,\n",
+        "    verbose=1\n",
+        ")\n",
+        "\n",
+        "model.compile(\n",
+        "    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),\n",
+        "    loss=\"categorical_crossentropy\",\n",
+        "    metrics=[\"accuracy\"]\n",
+        ")\n",
+        "\n",
+        "history = model.fit(\n",
+        "    x_train, y_train,\n",
+        "    epochs=50,\n",
+        "    batch_size=64,\n",
+        "    validation_split=0.2,\n",
+        "    callbacks=[lr_schedule, early_stopping],\n",
+        "    verbose=1\n",
+        ")\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "2c6LcMeR_9vL",
+        "outputId": "c3f71fbf-0126-4389-e3f5-773564b6c0d9"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Epoch 1/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m38s\u001b[0m 36ms/step - accuracy: 0.2803 - loss: 2.3634 - val_accuracy: 0.4367 - val_loss: 1.5291 - learning_rate: 0.0010\n",
+            "Epoch 2/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m23s\u001b[0m 36ms/step - accuracy: 0.4706 - loss: 1.4660 - val_accuracy: 0.5684 - val_loss: 1.2184 - learning_rate: 0.0010\n",
+            "Epoch 3/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m40s\u001b[0m 35ms/step - accuracy: 0.5566 - loss: 1.2370 - val_accuracy: 0.3385 - val_loss: 2.2507 - learning_rate: 0.0010\n",
+            "Epoch 4/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m22s\u001b[0m 35ms/step - accuracy: 0.6130 - loss: 1.0947 - val_accuracy: 0.6329 - val_loss: 1.0783 - learning_rate: 0.0010\n",
+            "Epoch 5/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m22s\u001b[0m 35ms/step - accuracy: 0.6492 - loss: 0.9979 - val_accuracy: 0.6931 - val_loss: 0.9138 - learning_rate: 0.0010\n",
+            "Epoch 6/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m41s\u001b[0m 35ms/step - accuracy: 0.6782 - loss: 0.9312 - val_accuracy: 0.7184 - val_loss: 0.8545 - learning_rate: 0.0010\n",
+            "Epoch 7/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m22s\u001b[0m 35ms/step - accuracy: 0.7022 - loss: 0.8626 - val_accuracy: 0.6705 - val_loss: 0.9840 - learning_rate: 0.0010\n",
+            "Epoch 8/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m22s\u001b[0m 35ms/step - accuracy: 0.7162 - loss: 0.8289 - val_accuracy: 0.7439 - val_loss: 0.7467 - learning_rate: 0.0010\n",
+            "Epoch 9/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m21s\u001b[0m 34ms/step - accuracy: 0.7339 - loss: 0.7880 - val_accuracy: 0.6817 - val_loss: 1.0073 - learning_rate: 0.0010\n",
+            "Epoch 10/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m22s\u001b[0m 35ms/step - accuracy: 0.7495 - loss: 0.7445 - val_accuracy: 0.7687 - val_loss: 0.6934 - learning_rate: 0.0010\n",
+            "Epoch 11/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m22s\u001b[0m 35ms/step - accuracy: 0.7572 - loss: 0.7096 - val_accuracy: 0.7680 - val_loss: 0.7037 - learning_rate: 0.0010\n",
+            "Epoch 12/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m22s\u001b[0m 35ms/step - accuracy: 0.7674 - loss: 0.6757 - val_accuracy: 0.7939 - val_loss: 0.6073 - learning_rate: 0.0010\n",
+            "Epoch 13/50\n",
+            "\u001b[1m625/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m22s\u001b[0m 35ms/step - accuracy: 0.7798 - loss: 0.6554 - val_accuracy: 0.8055 - val_loss: 0.5733 - learning_rate: 0.0010\n",
+            "Epoch 14/50\n",
+            "\u001b[1m527/625\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m━━━━\u001b[0m \u001b[1m3s\u001b[0m 33ms/step - accuracy: 0.7833 - loss: 0.6397"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "w0G4azd0XWOY"
+      },
+      "source": [
+        "## Evaluate neural network performance\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "HA8GRgLTXWOZ"
+      },
+      "outputs": [],
+      "source": [
+        "model.evaluate(x_test,  y_test, verbose=2)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "IHwJZ9PdXWOZ"
+      },
+      "outputs": [],
+      "source": [
+        "prob = model.predict(x_test[0:40], verbose=0)\n",
+        "pred = tf.argmax(prob, axis=1)\n",
+        "\n",
+        "fig = plt.figure(figsize=(12, 18))\n",
+        "for i in range(40):\n",
+        "    subplot = fig.add_subplot(8, 5, i + 1)\n",
+        "    subplot.set_xticks([])\n",
+        "    subplot.set_yticks([])\n",
+        "    string = r'$\\hat{y}$'\n",
+        "    subplot.set_title(f'$y$:{tf.argmax(y_test[i])}, {string}:{pred[i].numpy()}')\n",
+        "    subplot.imshow(tf.squeeze(x_test[i]))\n",
+        "plt.show()\n",
+        "true_label = tf.argmax(y_test[i]).numpy()\n",
+        "pred_label = pred[i].numpy()\n",
+        "plt.title(f\"GT: {true_label}, Pred: {pred_label}\")\n",
+        "loss, accuracy = model.evaluate(x_test, y_test, verbose=0)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "loss, accuracy = model.evaluate(x_test, y_test, verbose=0)\n",
+        "print(\"Test Accuracy:\", accuracy)\n"
+      ],
+      "metadata": {
+        "id": "XVOGAnq4tJ7e"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "accelerator": "GPU",
+    "colab": {
+      "provenance": [],
+      "include_colab_link": true
+    },
+    "gpuClass": "standard",
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
